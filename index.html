@@ -6,41 +6,67 @@
 <title>Mood Slay</title>
 <style>
 body{background:#000;color:#fff;text-align:center;font-family:Arial;margin:0;padding:10px}
-video{width:100%;max-width:380px;border-radius:20px;transform:scaleX(-1);border:3px solid #ff1493}
-#mood{font-size:38px;margin:15px;color:#ff1493;font-weight:bold}
-button{padding:18px 35px;background:#ff1493;color:#fff;border:0;border-radius:50px;font-size:20px}
+video{width:100%;max-width:380px;border-radius:20px;border:3px solid #ff1493}
+#mood{font-size:36px;margin:12px;color:#ff1493;font-weight:bold}
+button{padding:14px 25px;background:#ff1493;color:#fff;border:0;border-radius:50px;font-size:16px;margin:5px}
+#switch{ background:#333; }
 </style>
 </head>
 <body>
-<h2>😊 MOOD SLAY - AI</h2>
+<h2>😊 MOOD SLAY AI</h2>
 <video id="v" autoplay muted playsinline></video>
 <div id="mood">Tap START</div>
-<button id="btn">📸 START CAMERA</button>
-<p style="color:#888;font-size:12px">Offline AI • Private • No data saved</p>
+<button id="btn">📸 START FRONT CAMERA</button>
+<button id="switch">🔄 Switch to BACK Camera</button>
+<p style="color:#888;font-size:11px">100% Offline • Private • Front & Back</p>
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
-let v=document.getElementById('v'), m=document.getElementById('mood'), b=document.getElementById('btn');
-b.onclick=async()=>{
- m.innerText="Loading AI (10 sec)...";
- // THIS LINK IS 100% WORKING
+let v=document.getElementById('v'), mood=document.getElementById('mood');
+let currentFacing="user";
+let stream=null;
+
+async function startCam(facing){
+ if(stream){ stream.getTracks().forEach(t=>t.stop()); }
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing}});
+  v.srcObject=stream;
+  // Flip only front camera
+  v.style.transform = facing==="user"? "scaleX(-1)" : "scaleX(1)";
+  mood.innerText="AI Scanning... Come closer";
+  detect();
+ }catch(e){ mood.innerText="Allow camera!"; alert(e.message); }
+}
+
+async function loadAndStart(facing){
+ mood.innerText="Loading AI... 10 sec...";
  let MODEL='https://justadudewhohacks.github.io/face-api.js/models';
  await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL);
  await faceapi.nets.faceExpressionNet.loadFromUri(MODEL);
- m.innerText="AI Loaded! Starting Camera...";
- try{
-  let s=await navigator.mediaDevices.getUserMedia({video:true});
-  v.srcObject=s;
-  m.innerText="Come closer - Good light please";
-  setInterval(async()=>{
-   let d=await faceapi.detectSingleFace(v,new faceapi.TinyFaceDetectorOptions({inputSize:224})).withFaceExpressions();
-   if(d){
-    let e=d.expressions, top=Object.keys(e).reduce((a,b)=>e[a]>e[b]?a:b);
-    let em={happy:"😊",sad:"😢",angry:"😡",neutral:"😐",surprised:"😲",fearful:"😨",disgusted:"🤮"};
-    m.innerText=(em[top]||"")+ " + top.toUpperCase() + " " + Math.round(e[top]*100)+"%";
-   } else { m.innerText="Face not found - Come closer & more light 💡"; }
-  },600);
-  b.style.display='none';
- }catch(err){ m.innerText="Allow camera permission!"; alert(err); }
+ await startCam(facing);
+}
+
+async function detect(){
+ setInterval(async()=>{
+  let d=await faceapi.detectSingleFace(v,new faceapi.TinyFaceDetectorOptions({inputSize:224})).withFaceExpressions();
+  if(d){
+   let e=d.expressions, top=Object.keys(e).reduce((a,b)=>e[a]>e[b]?a:b);
+   let em={happy:"😊",sad:"😢",angry:"😡",neutral:"😐",surprised:"😲",fearful:"😨",disgusted:"🤮"};
+   mood.innerText=(em[top]||"😐")+" "+top.toUpperCase()+" "+Math.round(e[top]*100)+"%";
+  } else { mood.innerText="No face - come closer 💡"; }
+ },500);
+}
+
+document.getElementById('btn').onclick=()=>{
+ currentFacing="user";
+ loadAndStart(currentFacing);
+ document.getElementById('btn').innerText="Scanning...";
+}
+
+document.getElementById('switch').onclick=async()=>{
+ currentFacing = currentFacing==="user"? "environment" : "user";
+ mood.innerText="Switching to "+(currentFacing==="user"?"FRONT":"BACK")+"...";
+ await startCam(currentFacing);
+ document.getElementById('switch').innerText= currentFacing==="user"? "🔄 Switch to BACK Camera" : "🔄 Switch to FRONT Camera";
 }
 </script>
 </body>
