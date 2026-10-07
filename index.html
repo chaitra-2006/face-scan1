@@ -2,51 +2,80 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MOOD SLAY</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mood Slay - Offline AI</title>
 <style>
-body{margin:0;background:#111;color:#fff;font-family:sans-serif;text-align:center}
-video{width:95%;max-width:380px;border-radius:20px;margin:10px auto;display:block;transform:scaleX(-1);border:3px solid orange}
-#mood{font-size:44px;font-weight:900;margin:10px}
-.card{background:#222;border-radius:15px;padding:12px;margin:10px}
-button{width:90%;padding:15px;background:orange;color:#fff;border:0;border-radius:30px;font-size:18px;font-weight:bold}
+body{margin:0;background:#000;color:#fff;font-family:Arial;text-align:center}
+h1{color:#ff4da6;margin:15px}
+#video{width:95%;max-width:400px;border-radius:20px;border:3px solid #ff4da6;transform:scaleX(-1)}
+#mood{font-size:40px;margin:15px;font-weight:bold}
+#details{color:#aaa}
+button{padding:15px 30px;font-size:18px;background:#ff4da6;color:#fff;border:none;border-radius:30px;margin:15px}
 </style>
 </head>
 <body>
-<h2>😊 MOOD SLAY</h2>
-<p>Offline Face Mood Scanner</p>
+<h1>😊 MOOD SLAY</h1>
 <video id="video" autoplay muted playsinline></video>
-<div id="mood">Click START below</div>
-<div class="card" id="detail">Allow camera when asked</div>
-<button id="btn">📸 START CAMERA</button>
+<div id="mood">Click START</div>
+<div id="details">100% Offline & Private</div>
+<button id="start">📸 START CAMERA</button>
+
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
-let video=document.getElementById('video');
-let mood=document.getElementById('mood');
-let detail=document.getElementById('detail');
-let btn=document.getElementById('btn');
-let MODEL='https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model';
-btn.onclick=async()=>{
-btn.innerText='Loading AI...';
-await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL);
-await faceapi.nets.faceExpressionNet.loadFromUri(MODEL);
-let s=await navigator.mediaDevices.getUserMedia({video:true});
-video.srcObject=s;
-video.onplaying=()=>{
-btn.style.display='none';
-mood.innerText='Scanning...';
-setInterval(async()=>{
-let d=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
-if(d){
-let e=d.expressions;
-let top=Object.keys(e).reduce((a,b)=>e[a]>e[b]?a:b);
-let em={happy:'😊 HAPPY',sad:'😢 SAD',angry:'😡 ANGRY',neutral:'😐 CALM',surprised:'😲 WOW',fearful:'😨 SCARED',disgusted:'🤢 EW'};
-mood.innerText=em[top]||top;
-detail.innerText=`Happy ${Math.round(e.happy*100)}% | Sad ${Math.round(e.sad*100)}% | Angry ${Math.round(e.angry*100)}%`;
+const video=document.getElementById('video');
+const moodEl=document.getElementById('mood');
+const detailsEl=document.getElementById('details');
+const startBtn=document.getElementById('start');
+
+async function load(){
+ moodEl.innerText="Loading AI... Please wait 10 sec";
+ const MODEL_URL='https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model';
+ try{
+ await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+ await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+ moodEl.innerText="AI Ready! Click START again";
+ }catch(e){
+ // fallback cdn
+ const URL2='https://justadudewhohacks.github.io/face-api.js/models';
+ await faceapi.nets.tinyFaceDetector.loadFromUri(URL2);
+ await faceapi.nets.faceExpressionNet.loadFromUri(URL2);
+ moodEl.innerText="AI Ready! Click START again";
+ }
 }
-},500);
-};
-};
+
+async function startCam(){
+ try{
+ const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}});
+ video.srcObject=stream;
+ moodEl.innerText="Scanning... 😊";
+ startBtn.style.display='none';
+ detect();
+ }catch(err){
+ moodEl.innerText="Camera blocked! Allow camera in Chrome settings";
+ alert("Allow camera: "+err.message);
+ }
+}
+
+async function detect(){
+ setInterval(async()=>{
+  const detections=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+  if(detections){
+   const exp=detections.expressions;
+   let maxMood='neutral', maxVal=0;
+   for(let m in exp){ if(exp[m]>maxVal){maxVal=exp[m]; maxMood=m;} }
+   const emoji={happy:"😊",sad:"😢",angry:"😡",neutral:"😐",surprised:"😲",fearful:"😨",disgusted:"🤢"};
+   moodEl.innerText=(emoji[maxMood]||"😐")+" "+maxMood.toUpperCase();
+   detailsEl.innerText=`Happy:${Math.round(exp.happy*100)}% Sad:${Math.round(exp.sad*100)}% Angry:${Math.round(exp.angry*100)}%`;
+  } else {
+   moodEl.innerText="No face found - come closer";
+  }
+ },500);
+}
+
+startBtn.addEventListener('click', async()=>{
+ await load();
+ await startCam();
+});
 </script>
 </body>
 </html>
