@@ -3,53 +3,72 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MOOD SLAY - Logo</title>
+<title>MOOD SLAY</title>
 <style>
-body{background:#000;color:#fff;text-align:center;font-family:Arial;margin:0;padding:10px}
-.logo{width:110px;height:110px;background:radial-gradient(circle,#222,#000);border-radius:50%;margin:10px auto;border:3px solid #ff1493;display:flex;align-items:center;justify-content:center;font-size:60px;box-shadow:0 0 20px #ff149380}
-h1{margin:5px;color:#ff1493} h1 span{color:#fff}
-video{width:100%;max-width:380px;border-radius:20px;border:3px solid #ff1493}
-#mood{font-size:34px;margin:12px;color:#ff1493;font-weight:bold}
-button{padding:14px 24px;background:#ff1493;color:#fff;border:0;border-radius:50px;font-size:15px;margin:5px}
-#switch{background:#333}
+body{background:#000;color:#fff;text-align:center;font-family:Arial;margin:0;padding:12px}
+.logo-img{width:110px;height:110px;border-radius:50%;border:3px solid #ff1493;object-fit:cover;box-shadow:0 0 20px #ff1493; margin:10px auto; display:block}
+h1{margin:5px;color:#ff1493;font-size:28px} h1 span{color:#fff}
+video{width:100%;max-width:380px;border-radius:20px;border:3px solid #ff1493;margin-top:10px}
+#mood{font-size:32px;margin:12px;color:#ff1493;font-weight:bold;min-height:40px}
+button{padding:14px 22px;background:#ff1493;color:#fff;border:0;border-radius:50px;font-size:15px;margin:5px}
+#switch{background:#222;border:1px solid #ff1493}
+small{color:#888}
 </style>
 </head>
 <body>
-<div class="logo">😊</div>
+<!-- YOUR LOGO HERE -->
+<img src="IMG-20261007-WA3141.jpg" class="logo-img" alt="Mood Slay Logo">
 <h1>MOOD <span>SLAY</span></h1>
 <video id="v" autoplay muted playsinline></video>
 <div id="mood">Tap START</div>
 <button id="btn">📸 START FRONT</button>
 <button id="switch">🔄 BACK Camera</button>
-<p style="color:#888;font-size:11px">100% Offline AI • Private • Bidar</p>
+<p><small>100% Offline AI • Private • Made by Chaitra, Bidar</small></p>
+
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script>
-let v=document.getElementById('v'), mood=document.getElementById('mood');
+let v=document.getElementById('v'), moodEl=document.getElementById('mood');
 let facing="user", stream=null;
+
 async function startCam(f){
- if(stream)stream.getTracks().forEach(t=>t.stop());
- let s=await navigator.mediaDevices.getUserMedia({video:{facingMode:f}});
- v.srcObject=s; v.style.transform=f==="user"?"scaleX(-1)":"scaleX(1)";
- detect();
+ if(stream) stream.getTracks().forEach(t=>t.stop());
+ try{
+  let s=await navigator.mediaDevices.getUserMedia({video:{facingMode:f}});
+  v.srcObject=s;
+  v.style.transform=f==="user"?"scaleX(-1)":"scaleX(1)";
+  detect();
+ }catch(e){ moodEl.innerText="Allow camera permission!"; }
 }
+
 async function load(f){
- mood.innerText="Loading AI...";
- let M='https://justadudewhohacks.github.io/face-api.js/models';
- await faceapi.nets.tinyFaceDetector.loadFromUri(M);
- await faceapi.nets.faceExpressionNet.loadFromUri(M);
+ moodEl.innerText="Loading AI... wait 10s";
+ let MODEL='https://justadudewhohacks.github.io/face-api.js/models';
+ await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL);
+ await faceapi.nets.faceExpressionNet.loadFromUri(MODEL);
  await startCam(f);
+ moodEl.innerText="AI Ready! Scanning...";
 }
-async function detect(){
+
+function detect(){
  setInterval(async()=>{
   let d=await faceapi.detectSingleFace(v,new faceapi.TinyFaceDetectorOptions({inputSize:224})).withFaceExpressions();
-  if(d){let e=d.expressions,t=Object.keys(e).reduce((a,b)=>e[a]>e[b]?a:b);
-  let em={happy:"😊",sad:"😢",angry:"😡",neutral:"😐",surprised:"😲",fearful:"😨",disgusted:"🤮"};
-  mood.innerText=(em[t]||"")+ " "+t.toUpperCase()+" "+Math.round(e[t]*100)+"%";
-  }else mood.innerText="Come closer 💡";
- },500);
+  if(d){
+   let e=d.expressions, top=Object.keys(e).reduce((a,b)=>e[a]>e[b]?a:b);
+   let em={happy:"😊 Happy",sad:"😢 Sad",angry:"😡 Angry",neutral:"😐 Calm",surprised:"😲 Surprised",fearful:"😨 Scared",disgusted:"🤢 Disgust"};
+   moodEl.innerText=(em[top]||top)+" "+Math.round(e[top]*100)+"%";
+  } else {
+   moodEl.innerText="No face - come closer 💡";
+  }
+ },600);
 }
-document.getElementById('btn').onclick=()=>{facing="user";load(facing);};
-document.getElementById('switch').onclick=async()=>{facing=facing==="user"?"environment":"user"; await startCam(facing); document.getElementById('switch').innerText=facing==="user"?"🔄 BACK Camera":"🔄 FRONT Camera";};
+
+document.getElementById('btn').onclick=()=>{ facing="user"; load(facing); document.getElementById('btn').style.display='none'; };
+document.getElementById('switch').onclick=async()=>{
+ facing=facing==="user"?"environment":"user";
+ moodEl.innerText="Switching to "+(facing==="user"?"FRONT":"BACK")+"...";
+ await startCam(facing);
+ document.getElementById('switch').innerText=facing==="user"?"🔄 BACK Camera":"🔄 FRONT Camera";
+};
 </script>
 </body>
 </html>
