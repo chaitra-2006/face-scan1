@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MOOD SLAY</title>
+<style>
+body{margin:0;background:#111;color:#fff;font-family:sans-serif;text-align:center}
+video{width:95%;max-width:380px;border-radius:20px;margin:10px auto;display:block;transform:scaleX(-1);border:3px solid orange}
+#mood{font-size:44px;font-weight:900;margin:10px}
+.card{background:#222;border-radius:15px;padding:12px;margin:10px}
+button{width:90%;padding:15px;background:orange;color:#fff;border:0;border-radius:30px;font-size:18px;font-weight:bold}
+</style>
+</head>
+<body>
+<h2>😊 MOOD SLAY</h2>
+<p>Offline Face Mood Scanner</p>
+<video id="video" autoplay muted playsinline></video>
+<div id="mood">Click START below</div>
+<div class="card" id="detail">Allow camera when asked</div>
+<button id="btn">📸 START CAMERA</button>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script>
+let video=document.getElementById('video');
+let mood=document.getElementById('mood');
+let detail=document.getElementById('detail');
+let btn=document.getElementById('btn');
+let MODEL='https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model';
+btn.onclick=async()=>{
+btn.innerText='Loading AI...';
+await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL);
+await faceapi.nets.faceExpressionNet.loadFromUri(MODEL);
+let s=await navigator.mediaDevices.getUserMedia({video:true});
+video.srcObject=s;
+video.onplaying=()=>{
+btn.style.display='none';
+mood.innerText='Scanning...';
+setInterval(async()=>{
+let d=await faceapi.detectSingleFace(video,new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
+if(d){
+let e=d.expressions;
+let top=Object.keys(e).reduce((a,b)=>e[a]>e[b]?a:b);
+let em={happy:'😊 HAPPY',sad:'😢 SAD',angry:'😡 ANGRY',neutral:'😐 CALM',surprised:'😲 WOW',fearful:'😨 SCARED',disgusted:'🤢 EW'};
+mood.innerText=em[top]||top;
+detail.innerText=`Happy ${Math.round(e.happy*100)}% | Sad ${Math.round(e.sad*100)}% | Angry ${Math.round(e.angry*100)}%`;
+}
+},500);
+};
+};
+</script>
+</body>
+</html>
