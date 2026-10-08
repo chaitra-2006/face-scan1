@@ -1,0 +1,9 @@
+{
+  "name": "MOOD SLAY - Offline",
+  "short_name": "MOOD SLAY",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#ff1493",
+  "icons": [{"src": "logo.png", "sizes": "512x512", "type": "image/png"}]
+}
