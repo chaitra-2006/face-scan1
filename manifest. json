@@ -1,9 +1,18 @@
 {
-  "name": "MOOD SLAY - Offline",
+  "name": "MOOD SLAY - AI Mood Detector",
   "short_name": "MOOD SLAY",
+  "description": "AI app that detects your mood with big emojis - Happy Sad Angry Surprised - Made by Chaitra Bidar",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#ff1493",
-  "icons": [{"src": "logo.png", "sizes": "512x512", "type": "image/png"}]
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
